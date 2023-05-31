@@ -12,11 +12,61 @@ use Illuminate\Support\Facades\Validator;
 
 class UserPostController extends Controller
 {
+    public function search(Request $request){
+        $name = $request->query('name');
+
+        $data = DB::table('user_posts')
+            ->join('users', 'users.id', '=', 'user_posts.user_id')
+            ->where('user_posts.description', 'LIKE', '%' . $name . '%')
+            ->select('*')
+            ->get();
+
+        return response()->json([
+            'data' => $data,
+        ]);  
+    }
+
+    public function like($id){
+        $data = UserPost::findOrFail($id);
+        $data->update([
+            'likes' => $data['likes'] + 1
+        ]);
+
+        return response()->json([
+            'data' => $data,
+        ]);  
+    }
+
+    public function unLike($id){
+        $data = UserPost::findOrFail($id);
+        $data->update([
+            'likes' => $data['likes'] - 1
+        ]);
+
+        return response()->json([
+            'data' => $data,
+        ]);  
+    }
+
     public function getAll(){
         $data = DB::table('user_posts')
             ->join('users', 'users.id', '=', 'user_posts.user_id')
+            ->select('user_posts.id','user_posts.*', 'users.name')
+            ->get();
+
+        return response()->json([
+            'data' => $data,
+        ]); 
+    }
+
+    public function getMyPost(Request $request){
+        $userId = $request->user()->id;
+
+        $data = DB::table('user_posts')
+            ->join('users', 'users.id', '=', 'user_posts.user_id')
+            ->where('users.id','=',$userId)
             ->select('*')
-            ->paginate();
+            ->get();
 
         return response()->json([
             'data' => $data,
